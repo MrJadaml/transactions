@@ -4,9 +4,9 @@ import {
   useState,
 } from 'react'
 import { GetServerSideProps } from 'next'
-import Link from 'next/link'
+import { useRouter } from 'next/router'
 import { Inter } from 'next/font/google'
-import { prisma } from '../lib/prisma'
+import { prisma } from '../../lib/prisma'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -19,42 +19,28 @@ interface ITransaction {
 }
 
 interface IProps {
-  transactions: (
-    ITransaction & {
-      id: string
-    }
-  )[]
+  transaction: ITransaction 
   error?: string
 }
 
-export default function Home({ transactions = [] }: IProps) {
-  const [transaction, setTransaction] = useState<ITransaction>({
-    title: '',
-    description: '',
-    amount: '',
-    fromAccount: '',
-    toAccount: '',
-  })
+export default function Home({ transaction }: IProps) {
+  const [updatedTransaction, setUpdatedTransaction] = useState<ITransaction>(transaction)
+  const router = useRouter()
+  const { id } = router.query
 
-  const handleCreate = async (transaction: ITransaction) => {
+  const handleUpdate = async (nextTransaction: ITransaction) => {
     try {
-      await fetch('http://localhost:3000/api/transaction/create', {
-        body: JSON.stringify(transaction),
+      await fetch(`http://localhost:3000/api/transaction/${id}/update`, {
+        body: JSON.stringify(nextTransaction),
         headers: {
           'Content-Type': 'application/json',
         },
-        method: 'POST',
+        method: 'PUT',
       })
 
-      setTransaction({
-        title: '',
-        description: '',
-        amount: '',
-        fromAccount: '',
-        toAccount: '',
-      })
+      router.push('/')
     } catch (err) {
-      console.error(`#index_handleCreate Error: ${err}`)
+      console.error(`#index_handleUpdate Error: ${err}`)
     }
   }
 
@@ -62,8 +48,8 @@ export default function Home({ transactions = [] }: IProps) {
     evt: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
     fieldName: string
   ) => {
-    setTransaction({
-      ...transaction,
+    setUpdatedTransaction({
+      ...updatedTransaction,
       [fieldName]: evt.target.value,
     })
   }
@@ -72,7 +58,7 @@ export default function Home({ transactions = [] }: IProps) {
     evt.preventDefault()
 
     try {
-      await handleCreate(transaction)
+      await handleUpdate(updatedTransaction)
     } catch (err) {
       console.error(`#index_handleSubmit Error: ${err}`)
     }
@@ -83,7 +69,7 @@ export default function Home({ transactions = [] }: IProps) {
       className={`flex min-h-screen flex-col items-center justify-between p-24 ${inter.className}`}
     >
       <div>
-        <h2>Add Transaction</h2>
+        <h2>Update Transaction</h2>
 
         <form
           onSubmit={handleSubmit}
@@ -92,103 +78,74 @@ export default function Home({ transactions = [] }: IProps) {
           <input
             type="text"
             placeholder="title"
-            value={transaction.title}
+            value={updatedTransaction.title}
             onChange={(evt) => handleChange(evt, 'title')}
           />
 
           <textarea
             placeholder="description"
-            value={transaction.description}
+            value={updatedTransaction.description}
             onChange={(evt) => handleChange(evt, 'description')}
           />
 
           <input
             type="text"
             placeholder="amount"
-            value={transaction.amount}
+            value={updatedTransaction.amount}
             onChange={(evt) => handleChange(evt, 'amount')}
           />
 
           <input
             type="text"
             placeholder="From Account"
-            value={transaction.fromAccount}
+            value={updatedTransaction.fromAccount}
             onChange={(evt) => handleChange(evt, 'fromAccount')}
           />
 
           <input
             type="text"
             placeholder="To Account"
-            value={transaction.toAccount}
+            value={updatedTransaction.toAccount}
             onChange={(evt) => handleChange(evt, 'toAccount')}
           />
 
           <button
             type="submit"
           >
-            Save
+            Update
           </button>
         </form>
-      </div>
-
-      <div>
-        <h2>Transactions</h2>
-
-        <table className="table-auto">
-          <thead>
-            <tr>
-              <th>Title</th>
-              <th>Description</th>
-              <th>Amount</th>
-              <th>From Account</th>
-              <th>To Account</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            {transactions.map(transaction => 
-              <tr key={transaction.id}>
-                <td>{transaction.title}</td>
-                <td>{transaction.description}</td>
-                <td>{transaction.amount}</td>
-                <td>{transaction.fromAccount}</td>
-                <td>{transaction.toAccount}</td>
-                <td className="bg-blue-500 rounded">
-                  <Link href={`/transaction/${transaction.id}`}>Edit</Link>
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
       </div>
     </main>
   )
 }
 
-export const getServerSideProps: GetServerSideProps = async () => {
+export const getServerSideProps: GetServerSideProps = async (context) => {
+  const { id } = context.query
   try {
-    const transactions = await prisma.transaction.findMany({
+    const transaction = await prisma.transaction.findUnique({
       select: {
-        id: true,
         title: true,
         description: true,
         amount: true,
         fromAccount: true,
         toAccount: true,
       },
-      orderBy: { transactionDate: 'desc' },
+      where: {
+        id: Number(id) || undefined,
+      },
     })
 
     return {
       props: {
-        transactions,
+        transaction,
       },
     }
   } catch (err) {
     console.error(`#index_getServerSideProps Error: ${err}`)
     return {
       props: {
-        transactions: [],
+        transaction: {},
         error: 'Error fetching data',
       },
     }
