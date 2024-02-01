@@ -111,19 +111,21 @@ export default function Home({ transactions = [] }: IProps) {
 
         <form
           onSubmit={handleSubmit}
-          className="flex flex-col"
+          className="flex flex-col space-y-3"
         >
           <input
             type="text"
             placeholder="title"
             value={transaction.title}
             onChange={(evt) => handleChange(evt, 'title')}
+            className="border-2 rounded p-1"
           />
 
           <textarea
             placeholder="description"
             value={transaction.description}
             onChange={(evt) => handleChange(evt, 'description')}
+            className="border-2 rounded p-1"
           />
 
           <input
@@ -131,6 +133,7 @@ export default function Home({ transactions = [] }: IProps) {
             placeholder="amount"
             value={transaction.amount}
             onChange={(evt) => handleChange(evt, 'amount')}
+            className="border-2 rounded p-1"
           />
 
           <input
@@ -138,6 +141,7 @@ export default function Home({ transactions = [] }: IProps) {
             placeholder="From Account"
             value={transaction.fromAccount}
             onChange={(evt) => handleChange(evt, 'fromAccount')}
+            className="border-2 rounded p-1"
           />
 
           <input
@@ -145,10 +149,12 @@ export default function Home({ transactions = [] }: IProps) {
             placeholder="To Account"
             value={transaction.toAccount}
             onChange={(evt) => handleChange(evt, 'toAccount')}
+            className="border-2 rounded p-1"
           />
 
           <button
             type="submit"
+            className="border-2 rounded bg-green-500 p-1"
           >
             Save
           </button>
