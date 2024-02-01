@@ -5,6 +5,7 @@ import {
 } from 'react'
 import { GetServerSideProps } from 'next'
 import Link from 'next/link'
+import { useRouter } from 'next/router'
 import { Inter } from 'next/font/google'
 import { prisma } from '../lib/prisma'
 
@@ -36,6 +37,12 @@ export default function Home({ transactions = [] }: IProps) {
     toAccount: '',
   })
 
+  const router = useRouter()
+
+  const pageRefresh = () => {
+    router.replace(router.asPath)
+  }
+
   const handleCreate = async (transaction: ITransaction) => {
     try {
       await fetch('http://localhost:3000/api/transaction/create', {
@@ -53,8 +60,25 @@ export default function Home({ transactions = [] }: IProps) {
         fromAccount: '',
         toAccount: '',
       })
+
+      pageRefresh()
     } catch (err) {
       console.error(`#index_handleCreate Error: ${err}`)
+    }
+  }
+
+  const handleDelete = async (id: string) => {
+    try {
+      await fetch(`http://localhost:3000/api/transaction/${id}/delete`, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        method: 'DELETE'
+      })
+
+      pageRefresh()
+    } catch (err) {
+      console.error(`#index_handleDelete Error: ${err}`)
     }
   }
 
@@ -155,6 +179,9 @@ export default function Home({ transactions = [] }: IProps) {
                 <td>{transaction.toAccount}</td>
                 <td className="bg-blue-500 rounded">
                   <Link href={`/transaction/${transaction.id}`}>Edit</Link>
+                </td>
+                <td className="bg-red-500 rounded">
+                  <button onClick={() => handleDelete(transaction.id)}>Delete</button>
                 </td>
               </tr>
             )}
