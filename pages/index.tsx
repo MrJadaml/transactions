@@ -3,7 +3,9 @@ import {
   FormEvent,
   useState,
 } from 'react'
+import { GetServerSideProps } from 'next'
 import { Inter } from 'next/font/google'
+import { prisma } from '../lib/prisma'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -15,7 +17,16 @@ interface ITransaction {
   toAccount: string
 }
 
-export default function Home() {
+interface IProps {
+  transactions: (
+    ITransaction & {
+      id: string
+    }
+  )[]
+  error?: string
+}
+
+export default function Home({ transactions = [] }: IProps) {
   const [transaction, setTransaction] = useState<ITransaction>({
     title: '',
     description: '',
@@ -113,12 +124,69 @@ export default function Home() {
 
           <button
             type="submit"
-            className="text-white"
           >
             Save
           </button>
         </form>
       </div>
+
+      <div>
+        <h2>Transactions</h2>
+
+        <table className="table-auto">
+          <thead>
+            <tr>
+              <th>Title</th>
+              <th>Description</th>
+              <th>Amount</th>
+              <th>From Account</th>
+              <th>To Account</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {transactions.map(transaction => 
+              <tr key={transaction.id}>
+                <td>{transaction.title}</td>
+                <td>{transaction.description}</td>
+                <td>{transaction.amount}</td>
+                <td>{transaction.fromAccount}</td>
+                <td>{transaction.toAccount}</td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
     </main>
   )
+}
+
+export const getServerSideProps: GetServerSideProps = async () => {
+  try {
+    const transactions = await prisma.transaction.findMany({
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        amount: true,
+        fromAccount: true,
+        toAccount: true,
+      },
+      orderBy: { transactionDate: 'desc' },
+    })
+
+    return {
+      props: {
+        transactions,
+      },
+    }
+  } catch (err) {
+    console.error(`#index_getServerSideProps Error: ${err}`)
+    return {
+      props: {
+        transactions: [],
+        error: 'Error fetching data',
+      },
+    }
+  }
 }
