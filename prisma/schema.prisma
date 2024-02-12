@@ -15,8 +15,18 @@ model Transaction {
   title String
   description String
   amount Int
-  fromAccount String
-  toAccount String
+  fromAccount Account @relation("FromTransaction", fields: [fromAccountId], references: [id])
+  fromAccountId Int
+  toAccount Account @relation("ToTransaction", fields: [toAccountId], references: [id])
+  toAccountId Int
   transactionDate DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model Account {
+  id  Int @id @default(autoincrement())
+  balance Int @default(0)
+  name String
+  transactionsFrom Transaction[] @relation("FromTransaction")
+  transactionsTo Transaction[] @relation("ToTransaction")
 }

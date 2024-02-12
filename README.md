@@ -12,6 +12,12 @@ npm i
 yarn
 ```
 
+Add a .env file with db connection string
+
+```
+DATABASE_URL="<URL GOES HERE>"
+```
+
 First, run the development server:
 
 ```bash
